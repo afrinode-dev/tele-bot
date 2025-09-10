@@ -1,10 +1,6 @@
 const { Markup } = require('telegraf');
-const { sendImage } = require('../utils/helpers');
-const { db } = require('../database');
-const config = require('../config');
 
 function requestPaymentProof(ctx) {
-  sendImage(ctx, '../assets/bot.png');
   ctx.reply(
     '💳 Envoi de preuve de paiement\n\n' +
     'Veuillez envoyer votre capture d\'écran ou photo de la preuve de paiement.\n\n' +
@@ -15,7 +11,7 @@ function requestPaymentProof(ctx) {
   );
 }
 
-async function handleMessage(ctx) {
+async function handleMessage(ctx, dbFunctions) {
   // Vérifier si le message contient une photo ou un document
   if (ctx.message.photo || ctx.message.document) {
     const userId = ctx.from.id;
@@ -25,7 +21,7 @@ async function handleMessage(ctx) {
     
     try {
       // Vérifier si l'utilisateur a une commande en attente
-      const order = await db.get(
+      const order = await dbFunctions.getQuery(
         `SELECT * FROM orders WHERE user_id = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1`,
         [userId]
       );
@@ -34,7 +30,7 @@ async function handleMessage(ctx) {
         ctx.reply(
           'Vous n\'avez pas de commande en attente. Veuillez d\'abord créer une commande.',
           Markup.inlineKeyboard([
-            Markup.button.callback('📱 Voir les numéros', 'numbers_category_whatsapp'),
+            Markup.button.callback('🌍 Choisir un pays', 'choose_continent'),
             Markup.button.callback('🏠 Accueil', 'main_menu')
           ])
         );
@@ -42,29 +38,34 @@ async function handleMessage(ctx) {
       }
       
       // Enregistrer la preuve de paiement
-      await db.run(
-        `INSERT INTO payments (user_id, order_id, proof_image, created_at)
-         VALUES (?, ?, ?, datetime('now'))`,
+      await dbFunctions.runQuery(
+        `INSERT INTO payments (user_id, order_id, proof_image)
+         VALUES (?, ?, ?)`,
         [userId, order.order_id, fileId]
       );
       
       // Mettre à jour le statut de la commande
-      await db.run(
+      await dbFunctions.runQuery(
         `UPDATE orders SET status = 'payment_pending' WHERE order_id = ?`,
         [order.order_id]
       );
       
       // Envoyer la preuve à l'admin
+      const adminId = process.env.ADMIN_ID || 123456789;
       const caption = `Nouvelle preuve de paiement!\n\n` +
                      `Utilisateur: @${ctx.from.username || ctx.from.first_name}\n` +
                      `ID: ${userId}\n` +
                      `Commande: #${order.order_id}\n` +
                      `Date: ${new Date().toLocaleString('fr-FR')}`;
       
-      if (ctx.message.photo) {
-        await ctx.telegram.sendPhoto(config.ADMIN_ID, fileId, { caption });
-      } else {
-        await ctx.telegram.sendDocument(config.ADMIN_ID, fileId, { caption });
+      try {
+        if (ctx.message.photo) {
+          await ctx.telegram.sendPhoto(adminId, fileId, { caption });
+        } else {
+          await ctx.telegram.sendDocument(adminId, fileId, { caption });
+        }
+      } catch (adminError) {
+        console.error('Erreur lors de l\'envoi à l\'admin:', adminError);
       }
       
       ctx.reply(
@@ -73,6 +74,7 @@ async function handleMessage(ctx) {
         'Vous recevrez votre numéro sous peu une fois le paiement confirmé.\n\n' +
         'Merci pour votre confiance!',
         Markup.inlineKeyboard([
+          Markup.button.callback('🔄 Historique', 'purchase_history'),
           Markup.button.callback('🏠 Accueil', 'main_menu')
         ])
       );
