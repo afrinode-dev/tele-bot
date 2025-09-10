@@ -1,26 +1,32 @@
 {
   "name": "telegram-virtual-numbers-bot",
-  "version": "1.0.0",
-  "description": "Bot Telegram de vente de numéros virtuels",
+  "version": "2.0.0",
+  "description": "Bot Telegram professionnel de vente de numéros virtuels",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "telegraf": "^4.15.3",
-    "sqlite3": "^5.1.6",
-    "sqlite": "^5.0.1",
-    "dotenv": "^16.3.1"
+    "telegraf": "^4.16.3",
+    "sqlite3": "^5.1.7",
+    "dotenv": "^16.4.7",
+    "express": "^4.19.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.1.4"
   },
   "keywords": [
     "telegram",
     "bot",
-    "virtual numbers"
+    "virtual numbers",
+    "professional",
+    "automation"
   ],
   "author": "Votre Nom",
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
 }
