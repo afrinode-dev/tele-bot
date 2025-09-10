@@ -1,40 +1,41 @@
 const { Markup } = require('telegraf');
-const { mainKeyboard, helpKeyboard, backKeyboard } = require('../utils/keyboards');
-const { sendImage } = require('../utils/helpers');
+
+function getMainMenuKeyboard() {
+  return Markup.inlineKeyboard([
+    [
+      Markup.button.callback('🌍 Choisir un continent', 'choose_continent'),
+      Markup.button.callback('📞 Voir les numéros', 'choose_continent')
+    ],
+    [
+      Markup.button.callback('💳 Envoyer preuve', 'payment_proof'),
+      Markup.button.callback('🔄 Historique', 'purchase_history')
+    ],
+    [
+      Markup.button.callback('🛠 Support', 'support'),
+      Markup.button.callback('🏠 Accueil', 'main_menu')
+    ]
+  ]);
+}
 
 function showMainMenu(ctx) {
-  sendImage(ctx, '../assets/bot.png');
   ctx.reply(
     '🌟 Menu Principal 🌟\n\nChoisissez une option :',
-    mainKeyboard
+    getMainMenuKeyboard()
   );
 }
 
 function showHelp(ctx) {
-  sendImage(ctx, '../assets/bot.png');
   ctx.reply(
     'ℹ️ Centre d\'Aide\n\nComment pouvons-nous vous aider?',
-    helpKeyboard
-  );
-}
-
-function showHelpSupport(ctx) {
-  sendImage(ctx, '../assets/bot.png');
-  ctx.reply(
-    '📋 Fonctionnement du Bot\n\n' +
-    '1. Choisissez le type de numéro dont vous avez besoin\n' +
-    '2. Sélectionnez votre continent et pays\n' +
-    '3. Consultez les détails et prix\n' +
-    '4. Procédez à l\'achat\n' +
-    '5. Envoyez votre preuve de paiement\n' +
-    '6. Recevez votre numéro par message\n\n' +
-    'Pour toute question, contactez notre support.',
-    backKeyboard
+    Markup.inlineKeyboard([
+      [Markup.button.callback('📋 Fonctionnement du bot', 'support')],
+      [Markup.button.callback('🔙 Retour', 'main_menu')]
+    ])
   );
 }
 
 module.exports = {
+  getMainMenuKeyboard,
   showMainMenu,
-  showHelp,
-  showHelpSupport
+  showHelp
 };
