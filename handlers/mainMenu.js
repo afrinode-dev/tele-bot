@@ -1,41 +1,60 @@
 const { Markup } = require('telegraf');
+const { sendMediaWithRetry } = require('../utils/mediaManager');
 
 function getMainMenuKeyboard() {
+  return Markup.keyboard([
+    ['🌍 Choisir un continent', '📞 Voir les numéros'],
+    ['💳 Envoyer preuve', '🔄 Historique'],
+    ['🛠 Support', '🏠 Accueil']
+  ]).resize();
+}
+
+function getInlineMenuKeyboard() {
   return Markup.inlineKeyboard([
     [
-      Markup.button.callback('🌍 Choisir un continent', 'choose_continent'),
-      Markup.button.callback('📞 Voir les numéros', 'choose_continent')
+      Markup.button.callback('📱 WhatsApp', 'service_whatsapp'),
+      Markup.button.callback('✈️ Telegram', 'service_telegram')
     ],
     [
-      Markup.button.callback('💳 Envoyer preuve', 'payment_proof'),
-      Markup.button.callback('🔄 Historique', 'purchase_history')
+      Markup.button.callback('🔍 Google', 'service_google'),
+      Markup.button.callback('📘 Facebook', 'service_facebook')
     ],
     [
-      Markup.button.callback('🛠 Support', 'support'),
-      Markup.button.callback('🏠 Accueil', 'main_menu')
+      Markup.button.callback('🎵 TikTok', 'service_tiktok'),
+      Markup.button.callback('🍎 Apple', 'service_apple')
     ]
   ]);
 }
 
-function showMainMenu(ctx) {
-  ctx.reply(
-    '🌟 Menu Principal 🌟\n\nChoisissez une option :',
-    getMainMenuKeyboard()
-  );
+async function showMainMenu(ctx) {
+  try {
+    // Envoyer les médias
+    await sendMediaWithRetry(ctx);
+    
+    // Afficher le menu principal
+    await ctx.reply(
+      '🌟 Menu Principal 🌟\n\nChoisissez une option :',
+      getMainMenuKeyboard()
+    );
+  } catch (error) {
+    console.error('Erreur dans showMainMenu:', error);
+    await ctx.reply(
+      '🌟 Menu Principal 🌟\n\nChoisissez une option :',
+      getMainMenuKeyboard()
+    );
+  }
 }
 
 function showHelp(ctx) {
   ctx.reply(
     'ℹ️ Centre d\'Aide\n\nComment pouvons-nous vous aider?',
-    Markup.inlineKeyboard([
-      [Markup.button.callback('📋 Fonctionnement du bot', 'support')],
-      [Markup.button.callback('🔙 Retour', 'main_menu')]
-    ])
+    getMainMenuKeyboard()
   );
 }
 
 module.exports = {
   getMainMenuKeyboard,
+  getInlineMenuKeyboard,
   showMainMenu,
   showHelp
 };
