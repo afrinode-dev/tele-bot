@@ -11,7 +11,7 @@ function showMainMenu(ctx) {
 }
 
 function showHelp(ctx) {
-  sendImage(ctx, './assets/bot.png');
+  sendImage(ctx, '../assets/bot.png');
   ctx.reply(
     'ℹ️ Centre d\'Aide\n\nComment pouvons-nous vous aider?',
     helpKeyboard
