@@ -38,7 +38,7 @@ const countriesByContinent = {
 };
 
 function showContinents(ctx, category) {
-  sendImage(ctx, './assets/bot.png');
+  sendImage(ctx, '../assets/bot.png');
   ctx.reply(
     `🌍 Choisissez votre continent pour les numéros ${getCategoryName(category)} :`,
     continentKeyboard(category)
@@ -46,7 +46,7 @@ function showContinents(ctx, category) {
 }
 
 function showCountries(ctx, continent, category) {
-  sendImage(ctx, './assets/bot.png');
+  sendImage(ctx, '../assets/bot.png');
   const countries = countriesByContinent[continent];
   
   ctx.reply(
@@ -56,7 +56,7 @@ function showCountries(ctx, continent, category) {
 }
 
 function showCountryDetails(ctx, countryCode, category, continent) {
-  sendImage(ctx, './assets/bot.png');
+  sendImage(ctx, '../assets/bot.png');
   
   const continentData = countriesByContinent[continent];
   const country = continentData.find(c => c.code === countryCode);
