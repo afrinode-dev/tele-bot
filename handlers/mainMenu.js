@@ -3,7 +3,7 @@ const { mainKeyboard, helpKeyboard, backKeyboard } = require('../utils/keyboards
 const { sendImage } = require('../utils/helpers');
 
 function showMainMenu(ctx) {
-  sendImage(ctx, './assets/bot.png');
+  sendImage(ctx, '../assets/bot.png');
   ctx.reply(
     '🌟 Menu Principal 🌟\n\nChoisissez une option :',
     mainKeyboard
@@ -19,7 +19,7 @@ function showHelp(ctx) {
 }
 
 function showHelpSupport(ctx) {
-  sendImage(ctx, './assets/bot.png');
+  sendImage(ctx, '../assets/bot.png');
   ctx.reply(
     '📋 Fonctionnement du Bot\n\n' +
     '1. Choisissez le type de numéro dont vous avez besoin\n' +
