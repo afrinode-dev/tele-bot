@@ -4,7 +4,8 @@ const mainMenu = require('./handlers/mainMenu');
 const numbersMenu = require('./handlers/numbersMenu');
 const paymentHandler = require('./handlers/paymentHandler');
 const adminHandler = require('./handlers/adminHandler');
-const { sendImage, sendAudio } = require('./utils/helpers');
+const historyHandler = require('./handlers/historyHandler');
+const supportHandler = require('./handlers/supportHandler');
 
 require('dotenv').config();
 
@@ -39,15 +40,11 @@ bot.start(async (ctx) => {
       [userId, username]
     );
     
-    // Envoyer l'image et l'audio
-    await sendImage(ctx, './assets/bot.png');
-    await sendAudio(ctx, './assets/intro.mp3');
-    
     // Afficher le menu principal
     await ctx.reply(
       '🌟 Bienvenue dans notre service de numéros virtuels ! 🌟\n\n' +
       'Choisissez une option ci-dessous :',
-      mainMenu.mainKeyboard
+      mainMenu.getMainMenuKeyboard()
     );
   } catch (error) {
     console.error('Erreur dans la commande /start:', error);
@@ -65,43 +62,54 @@ bot.command('send', (ctx) => {
   adminHandler.handleSendCommand(ctx, { runQuery, getQuery });
 });
 
-// Gestionnaires de callback pour les menus
+// Gestionnaires de callback pour les menus principaux
 bot.action('main_menu', (ctx) => {
   mainMenu.showMainMenu(ctx);
 });
 
-bot.action('help_support', (ctx) => {
-  mainMenu.showHelpSupport(ctx);
+bot.action('choose_continent', (ctx) => {
+  numbersMenu.showServiceSelection(ctx);
 });
 
 bot.action('payment_proof', (ctx) => {
   paymentHandler.requestPaymentProof(ctx);
 });
 
-// Gestionnaires pour les catégories de numéros
-bot.action(/numbers_category_(.+)/, (ctx) => {
-  const category = ctx.match[1];
-  numbersMenu.showContinents(ctx, category);
+bot.action('purchase_history', (ctx) => {
+  historyHandler.showPurchaseHistory(ctx, { getQuery, allQuery });
 });
 
+bot.action('support', (ctx) => {
+  supportHandler.showSupport(ctx);
+});
+
+// Gestionnaires pour les services
+bot.action(/service_(.+)/, (ctx) => {
+  const service = ctx.match[1];
+  numbersMenu.showContinents(ctx, service);
+});
+
+// Gestionnaires pour les continents
 bot.action(/continent_(.+)_(.+)/, (ctx) => {
   const continent = ctx.match[1];
-  const category = ctx.match[2];
-  numbersMenu.showCountries(ctx, continent, category);
+  const service = ctx.match[2];
+  numbersMenu.showCountries(ctx, continent, service);
 });
 
+// Gestionnaires pour les pays
 bot.action(/country_(.+)_(.+)_(.+)/, (ctx) => {
   const countryCode = ctx.match[1];
-  const category = ctx.match[2];
+  const service = ctx.match[2];
   const continent = ctx.match[3];
-  numbersMenu.showCountryDetails(ctx, countryCode, category, continent);
+  numbersMenu.showCountryDetails(ctx, countryCode, service, continent);
 });
 
+// Gestionnaires pour les achats
 bot.action(/purchase_(.+)_(.+)_(.+)/, (ctx) => {
   const countryCode = ctx.match[1];
-  const category = ctx.match[2];
+  const service = ctx.match[2];
   const continent = ctx.match[3];
-  numbersMenu.handlePurchase(ctx, countryCode, category, continent, { runQuery, getQuery });
+  numbersMenu.handlePurchase(ctx, countryCode, service, continent, { runQuery, getQuery });
 });
 
 // Gestionnaire pour les messages (preuves de paiement)
