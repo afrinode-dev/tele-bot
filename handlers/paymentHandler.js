@@ -1,13 +1,12 @@
 const { Markup } = require('telegraf');
+const { getMainMenuKeyboard } = require('./mainMenu');
 
-function requestPaymentProof(ctx) {
-  ctx.reply(
+async function requestPaymentProof(ctx) {
+  await ctx.reply(
     '💳 Envoi de preuve de paiement\n\n' +
     'Veuillez envoyer votre capture d\'écran ou photo de la preuve de paiement.\n\n' +
     'Assurez-vous que la preuve est claire et montre tous les détails importants.',
-    Markup.inlineKeyboard([
-      Markup.button.callback('🔙 Retour', 'main_menu')
-    ])
+    getMainMenuKeyboard()
   );
 }
 
@@ -15,6 +14,7 @@ async function handleMessage(ctx, dbFunctions) {
   // Vérifier si le message contient une photo ou un document
   if (ctx.message.photo || ctx.message.document) {
     const userId = ctx.from.id;
+    const username = ctx.from.username || ctx.from.first_name;
     const fileId = ctx.message.photo 
       ? ctx.message.photo[ctx.message.photo.length - 1].file_id 
       : ctx.message.document.file_id;
@@ -27,7 +27,7 @@ async function handleMessage(ctx, dbFunctions) {
       );
       
       if (!order) {
-        ctx.reply(
+        await ctx.reply(
           'Vous n\'avez pas de commande en attente. Veuillez d\'abord créer une commande.',
           Markup.inlineKeyboard([
             Markup.button.callback('🌍 Choisir un pays', 'choose_continent'),
@@ -50,13 +50,17 @@ async function handleMessage(ctx, dbFunctions) {
         [order.order_id]
       );
       
-      // Envoyer la preuve à l'admin
+      // Envoyer la preuve à l'admin avec toutes les informations
       const adminId = process.env.ADMIN_ID || 123456789;
-      const caption = `Nouvelle preuve de paiement!\n\n` +
-                     `Utilisateur: @${ctx.from.username || ctx.from.first_name}\n` +
-                     `ID: ${userId}\n` +
-                     `Commande: #${order.order_id}\n` +
-                     `Date: ${new Date().toLocaleString('fr-FR')}`;
+      const caption = `💰 NOUVELLE PREUVE DE PAIEMENT\n\n` +
+                     `👤 Utilisateur: @${username}\n` +
+                     `🆔 ID: ${userId}\n` +
+                     `📦 Commande: #${order.order_id}\n` +
+                     `🌍 Pays: ${order.country_code}\n` +
+                     `📱 Service: ${order.service_type}\n` +
+                     `💶 Prix: €${order.price}\n` +
+                     `📅 Date: ${new Date().toLocaleString('fr-FR')}\n\n` +
+                     `⚠️ À traiter rapidement!`;
       
       try {
         if (ctx.message.photo) {
@@ -64,11 +68,21 @@ async function handleMessage(ctx, dbFunctions) {
         } else {
           await ctx.telegram.sendDocument(adminId, fileId, { caption });
         }
+        
+        // Envoyer un message de confirmation à l'admin
+        await ctx.telegram.sendMessage(adminId,
+          `💬 Répondre à l'utilisateur:\n` +
+          `Utilisez /send ${userId} votre_message pour répondre à cet utilisateur.`,
+          Markup.inlineKeyboard([
+            Markup.button.callback('✅ Marquer comme payé', `approve_${order.order_id}`),
+            Markup.button.callback('❌ Rejeter', `reject_${order.order_id}`)
+          ])
+        );
       } catch (adminError) {
         console.error('Erreur lors de l\'envoi à l\'admin:', adminError);
       }
       
-      ctx.reply(
+      await ctx.reply(
         '✅ Preuve de paiement reçue!\n\n' +
         'Votre preuve a été envoyée à l\'administrateur pour vérification.\n' +
         'Vous recevrez votre numéro sous peu une fois le paiement confirmé.\n\n' +
@@ -81,7 +95,7 @@ async function handleMessage(ctx, dbFunctions) {
       
     } catch (error) {
       console.error('Erreur lors du traitement du paiement:', error);
-      ctx.reply('Une erreur s\'est produite. Veuillez réessayer.');
+      await ctx.reply('Une erreur s\'est produite. Veuillez réessayer.', getMainMenuKeyboard());
     }
   }
 }
