@@ -1,11 +1,18 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
 
 let db;
 
 function initDatabase() {
   return new Promise((resolve, reject) => {
-    const dbPath = path.join(__dirname, 'database.sqlite');
+    const dbDir = path.join(__dirname);
+    const dbPath = path.join(dbDir, 'database.sqlite');
+    
+    // Assurer que le répertoire existe
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
     
     db = new sqlite3.Database(dbPath, (err) => {
       if (err) {
@@ -24,7 +31,9 @@ function initDatabase() {
             username TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
           )
-        `);
+        `, (err) => {
+          if (err) console.error('Erreur création table users:', err);
+        });
         
         db.run(`
           CREATE TABLE IF NOT EXISTS orders (
@@ -37,7 +46,9 @@ function initDatabase() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (user_id)
           )
-        `);
+        `, (err) => {
+          if (err) console.error('Erreur création table orders:', err);
+        });
         
         db.run(`
           CREATE TABLE IF NOT EXISTS payments (
@@ -50,9 +61,11 @@ function initDatabase() {
             FOREIGN KEY (user_id) REFERENCES users (user_id),
             FOREIGN KEY (order_id) REFERENCES orders (order_id)
           )
-        `);
+        `, (err) => {
+          if (err) console.error('Erreur création table payments:', err);
+        });
         
-        console.log('Tables créées avec succès');
+        console.log('✅ Tables créées avec succès');
         resolve();
       });
     });
@@ -100,10 +113,29 @@ function allQuery(sql, params = []) {
   });
 }
 
+// Fermer proprement la base de données
+function closeDatabase() {
+  return new Promise((resolve, reject) => {
+    if (db) {
+      db.close((err) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.log('Base de données fermée.');
+          resolve();
+        }
+      });
+    } else {
+      resolve();
+    }
+  });
+}
+
 module.exports = { 
   initDatabase, 
   db: getDb, 
   runQuery, 
   getQuery, 
-  allQuery 
+  allQuery,
+  closeDatabase
 };
