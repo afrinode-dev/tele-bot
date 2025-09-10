@@ -1,4 +1,5 @@
 const { Markup } = require('telegraf');
+const { sendMediaWithRetry } = require('../utils/mediaManager');
 
 // Données des pays par continent
 const countriesByContinent = {
@@ -114,42 +115,47 @@ function getCountryDetailsKeyboard(countryCode, service, continent) {
   ]);
 }
 
-function showServiceSelection(ctx) {
-  ctx.reply(
+async function showServiceSelection(ctx) {
+  await sendMediaWithRetry(ctx);
+  await ctx.reply(
     '📱 Choisissez le type de service :',
     getServiceSelectionKeyboard()
   );
 }
 
-function showContinents(ctx, service) {
-  ctx.reply(
+async function showContinents(ctx, service) {
+  await sendMediaWithRetry(ctx);
+  await ctx.reply(
     `🌍 Choisissez votre continent pour les numéros ${getServiceName(service)} :`,
     getContinentKeyboard(service)
   );
 }
 
-function showCountries(ctx, continent, service) {
+async function showCountries(ctx, continent, service) {
+  await sendMediaWithRetry(ctx);
   const countries = countriesByContinent[continent];
   
-  ctx.reply(
+  await ctx.reply(
     `🌍 ${getContinentName(continent)} - ${getServiceName(service)}\n\nSélectionnez votre pays :`,
     getCountriesKeyboard(countries, service, continent)
   );
 }
 
-function showCountryDetails(ctx, countryCode, service, continent) {
+async function showCountryDetails(ctx, countryCode, service, continent) {
+  await sendMediaWithRetry(ctx);
+  
   const continentData = countriesByContinent[continent];
   const country = continentData.find(c => c.code === countryCode);
   
   if (!country) {
-    ctx.reply('Pays non trouvé.');
+    await ctx.reply('Pays non trouvé.');
     return;
   }
   
   // Générer un nombre aléatoire autour de 30
   const availableNumbers = Math.floor(Math.random() * 10) + 25;
   
-  ctx.reply(
+  await ctx.reply(
     `📋 Détails du pays\n\n` +
     `Pays: ${country.emoji} ${country.name}\n` +
     `Service: ${getServiceName(service)}\n` +
@@ -166,7 +172,7 @@ async function handlePurchase(ctx, countryCode, service, continent, dbFunctions)
   const country = continentData.find(c => c.code === countryCode);
   
   if (!country) {
-    ctx.reply('Pays non trouvé.');
+    await ctx.reply('Pays non trouvé.');
     return;
   }
   
@@ -178,7 +184,7 @@ async function handlePurchase(ctx, countryCode, service, continent, dbFunctions)
       [userId, countryCode, service, country.price]
     );
     
-    ctx.reply(
+    await ctx.reply(
       `✅ Commande créée!\n\n` +
       `Pays: ${country.emoji} ${country.name}\n` +
       `Service: ${getServiceName(service)}\n` +
@@ -191,7 +197,7 @@ async function handlePurchase(ctx, countryCode, service, continent, dbFunctions)
     );
   } catch (error) {
     console.error('Erreur lors de la création de la commande:', error);
-    ctx.reply('Une erreur s\'est produite. Veuillez réessayer.');
+    await ctx.reply('Une erreur s\'est produite. Veuillez réessayer.');
   }
 }
 
