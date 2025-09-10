@@ -4,7 +4,7 @@ const { db } = require('../database');
 const config = require('../config');
 
 function requestPaymentProof(ctx) {
-  sendImage(ctx, './assets/bot.png');
+  sendImage(ctx, '../assets/bot.png');
   ctx.reply(
     '💳 Envoi de preuve de paiement\n\n' +
     'Veuillez envoyer votre capture d\'écran ou photo de la preuve de paiement.\n\n' +
