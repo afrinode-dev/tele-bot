@@ -1,7 +1,4 @@
 const { Markup } = require('telegraf');
-const { continentKeyboard, countriesKeyboard, countryDetailsKeyboard, backToContinentsKeyboard } = require('../utils/keyboards');
-const { sendImage } = require('../utils/helpers');
-const { db } = require('../database');
 
 // Données des pays par continent
 const countriesByContinent = {
@@ -13,7 +10,9 @@ const countriesByContinent = {
     { code: 'KE', name: 'Kenya', price: 5.49, emoji: '🇰🇪' },
     { code: 'MA', name: 'Maroc', price: 5.99, emoji: '🇲🇦' },
     { code: 'TN', name: 'Tunisie', price: 5.49, emoji: '🇹🇳' },
-    // Ajouter d'autres pays africains...
+    { code: 'ET', name: 'Éthiopie', price: 4.99, emoji: '🇪🇹' },
+    { code: 'GH', name: 'Ghana', price: 5.29, emoji: '🇬🇭' },
+    { code: 'CI', name: 'Côte d\'Ivoire', price: 5.49, emoji: '🇨🇮' }
   ],
   europe: [
     { code: 'FR', name: 'France', price: 9.99, emoji: '🇫🇷' },
@@ -23,7 +22,9 @@ const countriesByContinent = {
     { code: 'ES', name: 'Espagne', price: 8.49, emoji: '🇪🇸' },
     { code: 'NL', name: 'Pays-Bas', price: 8.99, emoji: '🇳🇱' },
     { code: 'BE', name: 'Belgique', price: 8.49, emoji: '🇧🇪' },
-    // Ajouter d'autres pays européens...
+    { code: 'PT', name: 'Portugal', price: 8.29, emoji: '🇵🇹' },
+    { code: 'CH', name: 'Suisse', price: 9.79, emoji: '🇨🇭' },
+    { code: 'SE', name: 'Suède', price: 9.29, emoji: '🇸🇪' }
   ],
   america: [
     { code: 'US', name: 'États-Unis', price: 7.99, emoji: '🇺🇸' },
@@ -33,31 +34,110 @@ const countriesByContinent = {
     { code: 'AR', name: 'Argentine', price: 6.99, emoji: '🇦🇷' },
     { code: 'CL', name: 'Chili', price: 6.49, emoji: '🇨🇱' },
     { code: 'CO', name: 'Colombie', price: 6.29, emoji: '🇨🇴' },
-    // Ajouter d'autres pays américains...
+    { code: 'PE', name: 'Péru', price: 6.19, emoji: '🇵🇪' },
+    { code: 'VE', name: 'Venezuela', price: 5.99, emoji: '🇻🇪' },
+    { code: 'EC', name: 'Équateur', price: 6.09, emoji: '🇪🇨' }
   ]
 };
 
-function showContinents(ctx, category) {
-  sendImage(ctx, '../assets/bot.png');
+function getServiceSelectionKeyboard() {
+  return Markup.inlineKeyboard([
+    [
+      Markup.button.callback('📱 WhatsApp', 'service_whatsapp'),
+      Markup.button.callback('✈️ Telegram', 'service_telegram')
+    ],
+    [
+      Markup.button.callback('🔍 Google', 'service_google'),
+      Markup.button.callback('📘 Facebook', 'service_facebook')
+    ],
+    [
+      Markup.button.callback('🎵 TikTok', 'service_tiktok'),
+      Markup.button.callback('🍎 Apple', 'service_apple')
+    ],
+    [
+      Markup.button.callback('🔙 Retour', 'main_menu')
+    ]
+  ]);
+}
+
+function getContinentKeyboard(service) {
+  return Markup.inlineKeyboard([
+    [
+      Markup.button.callback('🌍 Afrique', `continent_africa_${service}`),
+      Markup.button.callback('🌍 Europe', `continent_europe_${service}`)
+    ],
+    [
+      Markup.button.callback('🌎 Amérique', `continent_america_${service}`)
+    ],
+    [
+      Markup.button.callback('🔙 Retour', 'choose_continent'),
+      Markup.button.callback('🏠 Accueil', 'main_menu')
+    ]
+  ]);
+}
+
+function getCountriesKeyboard(countries, service, continent) {
+  const buttons = [];
+  
+  // Créer des boutons par groupe de 2 pays
+  for (let i = 0; i < countries.length; i += 2) {
+    const row = [];
+    if (countries[i]) {
+      row.push(Markup.button.callback(
+        `${countries[i].emoji} ${countries[i].name}`,
+        `country_${countries[i].code}_${service}_${continent}`
+      ));
+    }
+    if (countries[i + 1]) {
+      row.push(Markup.button.callback(
+        `${countries[i + 1].emoji} ${countries[i + 1].name}`,
+        `country_${countries[i + 1].code}_${service}_${continent}`
+      ));
+    }
+    buttons.push(row);
+  }
+  
+  // Ajouter les boutons de navigation
+  buttons.push([
+    Markup.button.callback('🔙 Retour', `service_${service}`),
+    Markup.button.callback('🏠 Accueil', 'main_menu')
+  ]);
+  
+  return Markup.inlineKeyboard(buttons);
+}
+
+function getCountryDetailsKeyboard(countryCode, service, continent) {
+  return Markup.inlineKeyboard([
+    [Markup.button.callback('🛒 Acheter maintenant', `purchase_${countryCode}_${service}_${continent}`)],
+    [Markup.button.callback('🔙 Liste des pays', `continent_${continent}_${service}`)],
+    [Markup.button.callback('🏠 Accueil', 'main_menu')]
+  ]);
+}
+
+function showServiceSelection(ctx) {
   ctx.reply(
-    `🌍 Choisissez votre continent pour les numéros ${getCategoryName(category)} :`,
-    continentKeyboard(category)
+    '📱 Choisissez le type de service :',
+    getServiceSelectionKeyboard()
   );
 }
 
-function showCountries(ctx, continent, category) {
-  sendImage(ctx, '../assets/bot.png');
+function showContinents(ctx, service) {
+  ctx.reply(
+    `🌍 Choisissez votre continent pour les numéros ${getServiceName(service)} :`,
+    getContinentKeyboard(service)
+  );
+}
+
+function showCountries(ctx, continent, service) {
   const countries = countriesByContinent[continent];
   
   ctx.reply(
-    `🌍 ${getContinentName(continent)} - ${getCategoryName(category)}\n\nSélectionnez votre pays :`,
-    countriesKeyboard(countries, category, continent)
+    `🌍 ${getContinentName(continent)} - ${getServiceName(service)}\n\nSélectionnez votre pays :`,
+    getCountriesKeyboard(countries, service, continent)
   );
 }
 
-function showCountryDetails(ctx, countryCode, category, continent) {
-  sendImage(ctx, '../assets/bot.png');
-  
+function showCountryDetails(ctx, countryCode, service, continent) {
   const continentData = countriesByContinent[continent];
   const country = continentData.find(c => c.code === countryCode);
   
@@ -72,15 +152,15 @@ function showCountryDetails(ctx, countryCode, category, continent) {
   ctx.reply(
     `📋 Détails du pays\n\n` +
     `Pays: ${country.emoji} ${country.name}\n` +
-    `Service: ${getCategoryName(category)}\n` +
+    `Service: ${getServiceName(service)}\n` +
     `Prix: €${country.price}\n` +
     `Numéros disponibles: ${availableNumbers}\n\n` +
-    `Cliquez sur "Acheter" pour procéder à la commande.`,
-    countryDetailsKeyboard(countryCode, category, continent)
+    `Cliquez sur "Acheter maintenant" pour procéder à la commande.`,
+    getCountryDetailsKeyboard(countryCode, service, continent)
   );
 }
 
-async function handlePurchase(ctx, countryCode, category, continent) {
+async function handlePurchase(ctx, countryCode, service, continent, dbFunctions) {
   const userId = ctx.from.id;
   const continentData = countriesByContinent[continent];
   const country = continentData.find(c => c.code === countryCode);
@@ -92,20 +172,20 @@ async function handlePurchase(ctx, countryCode, category, continent) {
   
   try {
     // Enregistrer la commande dans la base de données
-    const result = await db.run(
-      `INSERT INTO orders (user_id, country_code, service_type, price, created_at)
-       VALUES (?, ?, ?, ?, datetime('now'))`,
-      [userId, countryCode, category, country.price]
+    const result = await dbFunctions.runQuery(
+      `INSERT INTO orders (user_id, country_code, service_type, price)
+       VALUES (?, ?, ?, ?)`,
+      [userId, countryCode, service, country.price]
     );
     
     ctx.reply(
       `✅ Commande créée!\n\n` +
       `Pays: ${country.emoji} ${country.name}\n` +
-      `Service: ${getCategoryName(category)}\n` +
+      `Service: ${getServiceName(service)}\n` +
       `Prix: €${country.price}\n\n` +
-      `Veuillez maintenant envoyer votre preuve de paiement en utilisant le bouton "Envoyer preuve de paiement" dans le menu principal.`,
+      `Veuillez maintenant envoyer votre preuve de paiement.`,
       Markup.inlineKeyboard([
-        Markup.button.callback('📤 Envoyer preuve de paiement', 'payment_proof'),
+        Markup.button.callback('💳 Envoyer preuve', 'payment_proof'),
         Markup.button.callback('🏠 Accueil', 'main_menu')
       ])
     );
@@ -116,8 +196,8 @@ async function handlePurchase(ctx, countryCode, category, continent) {
 }
 
 // Fonctions utilitaires
-function getCategoryName(category) {
-  const categories = {
+function getServiceName(service) {
+  const services = {
     'whatsapp': 'WhatsApp',
     'telegram': 'Telegram',
     'google': 'Google',
@@ -125,7 +205,7 @@ function getCategoryName(category) {
     'tiktok': 'TikTok',
     'apple': 'Apple'
   };
-  return categories[category] || category;
+  return services[service] || service;
 }
 
 function getContinentName(continent) {
@@ -138,6 +218,7 @@ function getContinentName(continent) {
 }
 
 module.exports = {
+  showServiceSelection,
   showContinents,
   showCountries,
   showCountryDetails,
