@@ -1,32 +1,19 @@
 {
-  "name": "telegram-virtual-numbers-bot",
-  "version": "2.0.0",
-  "description": "Bot Telegram professionnel de vente de numéros virtuels",
-  "main": "index.js",
+  "name": "onlinesim-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for OnlineSim virtual numbers",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "telegraf": "^4.16.3",
-    "sqlite3": "^5.1.7",
-    "dotenv": "^16.4.7",
-    "express": "^4.19.2"
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
+    "phone": "^3.1.44"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
-  },
-  "keywords": [
-    "telegram",
-    "bot",
-    "virtual numbers",
-    "professional",
-    "automation"
-  ],
-  "author": "Votre Nom",
-  "license": "MIT",
-  "engines": {
-    "node": ">=16.0.0"
   }
 }
