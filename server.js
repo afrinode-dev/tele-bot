@@ -7,6 +7,7 @@ const phone = require('phone');
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const API_KEY = process.env.ONLINESIM_API_KEY;
 const BANNER_URL = process.env.BANNER_IMAGE_URL;
+const PORT = process.env.PORT || 3000;
 
 // Vérification des variables d'environnement
 if (!BOT_TOKEN || !API_KEY) {
@@ -166,8 +167,6 @@ Envoyez /number pour obtenir un numéro virtuel`);
 // Gestionnaire de commande /help et /usage
 bot.help(async (ctx) => {
   const helpText = `·ᴥ· Virtual Number Bot\n\n
-Ce bot utilise l'API de onlinesim.io et récupère les numéros en ligne et actifs.
-Tout ce dont vous avez besoin est d'envoyer quelques commandes au bot et il trouvera un numéro aléatoire pour vous.\n\n
 ══════════════\n
 ★ Pour obtenir un nouveau numéro, envoyez simplement la commande /number ou utilisez le bouton inline (Renouveler) pour obtenir un nouveau numéro.\n\n
 ★ Pour obtenir les messages reçus, utilisez le bouton inline (Boîte de réception). Cela vous montrera les 5 derniers messages.\n\n
@@ -186,7 +185,7 @@ bot.command('usage', async (ctx) => {
 bot.command('number', async (ctx) => {
   try {
     // Message initial
-    let message = await ctx.reply('Recherche d\'un numéro aléatoire pour vous...\n\n⁀➴ Récupération des pays en ligne:');
+    let message = await ctx.reply('Recherche d\'un numéro pour vous...\n\n⁀➴ Récupération des pays en ligne:');
 
     // Récupérer les pays disponibles
     const countries = await onlineSimAPI.getCountries();
@@ -351,9 +350,16 @@ bot.catch((err, ctx) => {
   ctx.reply('Une erreur est survenue. Veuillez réessayer.');
 });
 
+// Serveur web pour Render
+const app = express();
+app.use(express.json());
+app.get('/', (req, res) => {
+  res.send('🤖 Bot est en ligne!');
+});
+
 // Démarrer le bot
-bot.launch().then(() => {
-  console.log('🤖 Bot OnlineSim démarré avec succès');
+app.listen(PORT, () => {
+  console.log(`🚀 Serveur web démarré sur le port ${PORT}`);
 });
 
 // Gestion propre de l'arrêt
